@@ -1,0 +1,277 @@
+﻿@using Wurqout.Code.Exercises;
+@using Wurqout.Services;
+@using Wurqout.ViewModels;
+@inject ModalService Modal
+
+<div class="modal-background"></div>
+<div class="modal-card" style="height: calc(100vh - 40px)">
+    <header class="modal-card-head">
+        <p class="modal-card-title">Add an exercise</p>
+        <button @onclick="Cancel" class="delete" aria-label="close"></button>
+    </header>
+    <section class="modal-card-body">
+
+        <div class="mb-2">
+            <div class="field has-addons">
+                <div class="control is-expanded has-icons-left">
+                    <input @bind-value="SearchText" @bind-value:event="oninput" @onkeyup="SearchKeyUp" class="input" type="text" placeholder="Search" />
+                    <span class="icon is-small is-left">
+                        <i class="fa fa-search"></i>
+                    </span>
+                </div>
+                <div class="control">
+                    <div class="is-hidden-mobile">
+                        <button @onclick="() => ShowFilters = !ShowFilters" class="button is-primary">
+                            <span class="icon">
+                                <i class="fa fa-filter"></i>
+                            </span>
+                            <span>Filter</span>
+                        </button>
+                    </div>
+                    <div class="is-hidden-tablet is-flex-mobile">
+                        <button @onclick="() => ShowFilters = !ShowFilters" class="button is-primary">
+                            <span class="icon">
+                                <i class="fa fa-filter"></i>
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="box has-background-light is-shadowless @(ShowFilters ? "" : "is-hidden")">
+            <div class="columns">
+                <div class="column">
+                    <p class="heading">Equipment</p>
+                    <hr class="is-thin" />
+                    <div class="field">
+                        <p class="control">
+                            <label class="checkbox">
+                                <input @onchange="BodyweightChanged" type="checkbox" checked="@Filter.IncludeBodyweight">
+                                Bodyweight
+                            </label>
+                        </p>
+                    </div>
+                    <div class="field">
+                        <p class="control">
+                            <label class="checkbox">
+                                <input @onchange="KettlebellChanged" type="checkbox" checked="@Filter.HasKettlebell">
+                                Kettlebell
+                            </label>
+                        </p>
+                    </div>
+                    <div class="field">
+                        <p class="control">
+                            <label class="checkbox">
+                                <input @onchange="DumbbellsChanged" type="checkbox" checked="@Filter.HasDumbbells">
+                                Dumbbells
+                            </label>
+                        </p>
+                    </div>
+                </div>
+                <div class="column">
+                    <p class="heading">Focus Area</p>
+                    <hr class="is-thin" />
+                    <div class="field">
+                        <p class="control">
+                            <label class="checkbox">
+                                <input @onchange="UpperbodyChanged" type="checkbox" checked="@Filter.IncludeUpperbody">
+                                Upper body
+                            </label>
+                        </p>
+                    </div>
+                    <div class="field">
+                        <p class="control">
+                            <label class="checkbox">
+                                <input @onchange="LowerbodyChanged" type="checkbox" checked="@Filter.IncludeLowerbody">
+                                Lower body
+                            </label>
+                        </p>
+                    </div>
+                    <div class="field">
+                        <p class="control">
+                            <label class="checkbox">
+                                <input @onchange="CoreChanged" type="checkbox" checked="@Filter.IncludeCore">
+                                Core
+                            </label>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <ul>
+            @foreach (var item in FilteredItems)
+            {
+                <li @onclick="() => item.Selected = !item.Selected" class="row" style="cursor: pointer;">
+                    <span class="icon is-medium">
+                        <i class="fa fa-check-circle @(item.Selected ? "has-text-primary" : "")"></i>
+                    </span>
+                    <span style="margin-left: 0.5rem;">@item.Exercise.Name</span>
+                </li>
+                <hr class="is-thin" />
+            }
+        </ul>
+
+    </section>
+    <footer class="modal-card-foot">
+        <button @onclick="AddExercises" class="button is-primary">Add Exercise</button>
+        <button @onclick="Cancel" class="button">Cancel</button>
+    </footer>
+</div>
+
+@code {
+
+    // Cascades
+
+    [CascadingParameter] public ModalParameters Parameters { get; set; }
+
+    // Properties
+
+    List<ExerciseItem> FilteredItems { get; set; }
+
+    List<ExerciseItem> ExerciseItems { get; set; }
+
+    ExerciseFilter Filter { get; set; }
+
+    string SearchText { get; set; }
+
+    bool ShowFilters { get; set; }
+
+    bool Initialized { get; set; }
+
+    // Events
+
+    protected override void OnInitialized()
+    {
+        Filter = new ExerciseFilter() { IncludeBodyweight = true };
+        ExerciseItems = new List<ExerciseItem>();
+        FilteredItems = new List<ExerciseItem>();
+
+        if (Parameters.TryGet<Settings>("Settings", out Settings settings))
+        {
+            Filter.IncludeUpperbody = settings.IncludeUpperbody;
+            Filter.IncludeLowerbody = settings.IncludeLowerbody;
+            Filter.IncludeCore = settings.IncludeCore;
+
+            Filter.HasKettlebell = settings.HasKettlebell;
+            Filter.HasDumbbells = settings.HasDumbbells;
+        }
+
+        UpdateFilteredItems();
+
+        Initialized = true;
+    }
+
+    private void SearchKeyUp(KeyboardEventArgs e)
+    {
+        if (string.IsNullOrWhiteSpace(SearchText))
+        {
+            FilteredItems = ExerciseItems;
+        }
+        else
+        {
+            string term = SearchText.ToLower();
+
+            FilteredItems = ExerciseItems.Where(x =>
+            x.Exercise.Name.ToLower().Contains(term) ||
+            x.Exercise.Family.ToString().ToLower().Contains(term)).ToList();
+        }
+    }
+
+    // Events - controls
+
+    void BodyweightChanged(ChangeEventArgs e)
+    {
+        if (!Initialized)
+            return;
+
+        Filter.IncludeBodyweight = (bool)e.Value;
+        UpdateFilteredItems();
+    }
+
+    void KettlebellChanged(ChangeEventArgs e)
+    {
+        if (!Initialized)
+            return;
+
+        Filter.HasKettlebell = (bool)e.Value;
+        UpdateFilteredItems();
+    }
+
+    void DumbbellsChanged(ChangeEventArgs e)
+    {
+        if (!Initialized)
+            return;
+
+        Filter.HasDumbbells = (bool)e.Value;
+        UpdateFilteredItems();
+    }
+
+    void UpperbodyChanged(ChangeEventArgs e)
+    {
+        if (!Initialized)
+            return;
+
+        Filter.IncludeUpperbody = (bool)e.Value;
+        UpdateFilteredItems();
+    }
+
+    void LowerbodyChanged(ChangeEventArgs e)
+    {
+        if (!Initialized)
+            return;
+
+        Filter.IncludeLowerbody = (bool)e.Value;
+        UpdateFilteredItems();
+    }
+
+    void CoreChanged(ChangeEventArgs e)
+    {
+        if (!Initialized)
+            return;
+
+        Filter.IncludeCore = (bool)e.Value;
+        UpdateFilteredItems();
+    }
+
+    void UpdateFilteredItems()
+    {
+        Filter.Run();
+
+        FilteredItems.Clear();
+        ExerciseItems.Clear();
+        for (int i = 0; i < Filter.AllExercises.Count; i++)
+        {
+            ExerciseItems.Add(
+                new ExerciseItem { Exercise = Filter.AllExercises[i] });
+        }
+
+        FilteredItems = ExerciseItems;
+    }
+
+    // Events - modal save and cancel
+
+    private void AddExercises()
+    {
+        var exercises = ExerciseItems
+            .Where(x => x.Selected)
+            .Select(x => x.Exercise)
+            .ToList();
+
+        Modal.Close(ModalResult.OK<List<Exercise>>(exercises));
+    }
+
+    private void Cancel()
+    {
+        Modal.Close(ModalResult.Cancel());
+    }
+
+    private class ExerciseItem
+    {
+        public Exercise Exercise { get; set; }
+
+        public bool Selected { get; set; }
+    }
+
+}

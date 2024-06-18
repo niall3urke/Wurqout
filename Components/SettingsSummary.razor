@@ -1,0 +1,68 @@
+﻿@using Wurqout.Services;
+@using Wurqout.ViewModels;
+@inject RoutineService Routine 
+
+<div class="box has-background-primary is-light">
+    <div class="columns is-centered is-vcentered has-text-centered">
+        <div class="column">
+            <div class="columns is-vcentered is-mobile">
+                <div class="column">
+                    <p class="heading">Exercises</p>
+                    <p class="is-size-4 has-text-grey">
+                        <a @onclick="ShowModal">@Settings.NumberExercises</a>
+                    </p>
+                </div>
+                <div class="column">
+                    <p class="heading">Sets</p>
+                    <p class="is-size-4 has-text-grey">
+                        <a @onclick="ShowModal">@Settings.NumberSets</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="column">
+            <div class="columns is-vcentered is-mobile">
+                <div class="column">
+                    <p class="heading">Interval</p>
+                    <p class="is-size-4 has-text-grey">
+                        <a @onclick="ShowModal">@Settings.DurationInterval</a><small>s</small>
+                    </p>
+                </div>
+                <div class="column">
+                    <p class="heading">Rest</p>
+                    <p class="is-size-4 has-text-grey">
+                        <a @onclick="ShowModal">@Settings.DurationRest</a><small>s</small>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="column">
+            <div class="columns is-vcentered is-mobile">
+                <div class="column">
+                    <p class="heading">Break</p>
+                    <p class="is-size-4 has-text-grey">
+                        <a @onclick="ShowModal">@Settings.DurationBreak</a><small>s</small>
+                    </p>
+                </div>
+                <div class="column">
+                    <p class="heading">Total</p>
+                    <p class="is-size-4 has-text-grey">
+                        <a @onclick="ShowModal">@Settings.Minutes</a><small>m</small> 
+                        <a @onclick="ShowModal">@Settings.Seconds</a><small>s</small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    // Parameters
+
+    [Parameter] public Settings Settings { get; set; }
+
+    [Parameter] public EventCallback ShowModal { get; set; }
+
+
+}

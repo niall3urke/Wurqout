@@ -1,0 +1,109 @@
+﻿<div id="menu" class="box has-background-primary is-light mb-2" style="position: sticky; top: 0; z-index: 1;">
+    <div class="level is-mobile">
+        <div class="level-left">
+            <a @onclick="AddClicked" class="button is-primary">
+                <span class="icon">
+                    <i class="fa fa-plus"></i>
+                </span>
+                <span>Add</span>
+            </a>
+        </div>
+        <div class="level-right">
+            <div class="level-item">
+                <div class="field has-addons">
+                    <div class="control">
+                        <div class="dropdown is-right @(showDropdown ? "is-active" : "")">
+                            <div class="dropdown-trigger">
+                                <button @onclick="Dropdown_Clicked" class="button is-primary is-light" aria-haspopup="true" aria-controls="dropdown-menu">
+                                    <span>Order</span>
+                                    <span class="icon is-medium">
+                                        <i class="fas fa-angle-down" aria-hidden="true"></i>
+                                    </span>
+                                </button>
+                            </div>
+                            <div class="dropdown-menu" id="dropdown-menu" role="menu">
+                                <div class="dropdown-content">
+                                    <a @onclick="SortAlternate" class="dropdown-item">
+                                        Alternate (weight-cardio)
+                                    </a>
+                                    <hr class="dropdown-divider">
+                                    <a @onclick="SortByFocus" class="dropdown-item">
+                                        Group by focus
+                                    </a>
+                                    <a @onclick="SortHardToEasy" class="dropdown-item">
+                                        Hard to easy
+                                    </a>
+                                    <a @onclick="SortEasyToHard" class="dropdown-item">
+                                        Easy to hard
+                                    </a>
+                                    <hr class="dropdown-divider">
+                                    <a @onclick="SortRandom" class="dropdown-item">
+                                        Random
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+
+    [Parameter] public EventCallback SortEasyToHardClicked { get; set; }
+
+    [Parameter] public EventCallback SortHardToEasyClicked { get; set; }
+
+    [Parameter] public EventCallback SortAlternateClicked { get; set; }
+
+    [Parameter] public EventCallback SortByFocusClicked { get; set; }
+
+    [Parameter] public EventCallback SortRandomClicked { get; set; }
+
+    [Parameter] public EventCallback AddClicked { get; set; }
+
+    // Fields
+
+    bool showDropdown;
+
+    // Events
+
+    void Dropdown_Clicked() => showDropdown = !showDropdown;
+
+    // Methods
+
+    void SortEasyToHard()
+    {
+        SortEasyToHardClicked.InvokeAsync(EventCallback.Empty);
+        showDropdown = false;
+    }
+
+    void SortHardToEasy()
+    {
+        SortHardToEasyClicked.InvokeAsync(EventCallback.Empty);
+        showDropdown = false;
+    }
+
+    void SortAlternate()
+    {
+        SortAlternateClicked.InvokeAsync(EventCallback.Empty);
+        showDropdown = false;
+    }
+
+    void SortByFocus()
+    {
+        SortByFocusClicked.InvokeAsync(EventCallback.Empty);
+        showDropdown = false;
+    }
+
+    void SortRandom()
+    {
+        SortRandomClicked.InvokeAsync(EventCallback.Empty);
+        showDropdown = false;
+    }
+
+
+}

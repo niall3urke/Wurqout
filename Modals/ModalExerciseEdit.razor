@@ -1,0 +1,103 @@
+﻿@using Wurqout.Services;
+@using Wurqout.ViewModels;
+@inject ModalService Modal
+
+<div class="modal-background"></div>
+<div class="modal-card">
+    <header class="modal-card-head">
+        <p class="modal-card-title">Edit</p>
+        <button @onclick="Cancel" class="delete" aria-label="close"></button>
+    </header>
+    <section class="modal-card-body">
+        <div class="box is-shadowless @(Block.IsTimed ? "has-background-light" : "")">
+            <div class="field">
+                <div class="control">
+                    <label class="radio">
+                        <input @onclick="() => Block.IsTimed = true" type="radio" name="RadTimeRep" checked="@Block.IsTimed">
+                        Has a timed interval
+                    </label>
+                </div>
+            </div>
+
+            <div class="field is-horizontal">
+                <div class="field-label is-normal">
+                    <label class="label">Interval</label>
+                </div>
+                <div class="field-body">
+                    <div class="field">
+                        <div class="field has-addons">
+                            <div class="control">
+                                <input @bind="Block.Duration" class="input" type="number" min="5" max="300" disabled="@(!Block.IsTimed)">
+                            </div>
+                            <div class="control">
+                                <a class="button is-static">
+                                    seconds
+                                </a>
+                            </div>
+                        </div>
+                        <p class="help">The duration of the exercise</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <hr clsas="is-thin" />
+        <div class="box is-shadowless @(Block.IsTimed ? "" : "has-background-light")">
+            <div class="field">
+                <div class="control">
+                    <label class="radio">
+                        <input @onclick="() => Block.IsTimed = false" type="radio" name="RadTimeRep" checked="@(!Block.IsTimed)">
+                        Has a rep target
+                    </label>
+                </div>
+            </div>
+
+            <div class="field is-horizontal">
+                <div class="field-label is-normal">
+                    <label class="label">Reps</label>
+                </div>
+                <div class="field-body">
+                    <div class="field">
+                        <div class="field has-addons">
+                            <div class="control">
+                                <input @bind="Block.NumReps" class="input" type="number" min="1" max="300" disabled="@(Block.IsTimed)">
+                            </div>
+                        </div>
+                        <p class="help">The number of repetitions to be completed</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <footer class="modal-card-foot">
+        <button @onclick="Save" class="button is-primary">Save</button>
+        <button @onclick="Cancel" class="button">Cancel</button>
+    </footer>
+</div>
+
+@code {
+
+    // Cascades
+
+    [CascadingParameter] ModalParameters Parameters { get; set; }
+
+    // Properties
+
+    public Block Block { get; set; }
+
+    // Events
+
+    protected override void OnInitialized()
+    {
+        Block = new Block();
+
+        if (Parameters.TryGet<Block>("Block", out Block block))
+        {
+            Block = block;
+        }
+    }
+
+    void Save() => Modal.Close(ModalResult.OK<Block>(Block));
+
+    void Cancel() => Modal.Close(ModalResult.Cancel());
+
+}

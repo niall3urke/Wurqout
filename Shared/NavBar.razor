@@ -1,0 +1,36 @@
+﻿<nav class="navbar @NavBarType">
+    <div class="container">
+        <div class="navbar-brand">
+            <a href="/" class="navbar-item">
+                <img src="/logo-256.png" alt="Logo">
+            </a>
+            <span @onclick="BurgerClick" class="navbar-burger burger @(ShowMenu ? "is-active" : "")">
+                <span></span>
+                <span></span>
+                <span></span>
+            </span>
+        </div>
+        <div class="navbar-menu @(ShowMenu ? "is-active" : "")">
+            <div class="navbar-end">
+            </div>
+        </div>
+    </div>
+</nav>
+
+
+@code {
+
+    // Cascades
+
+    [Parameter]
+    public string NavBarType { get; set; } = "is-transparent";
+
+    // Properties
+
+    public bool ShowMenu { get; set; }
+
+    // Handlers
+
+    void BurgerClick() => ShowMenu = !ShowMenu;
+
+}

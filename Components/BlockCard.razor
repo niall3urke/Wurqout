@@ -1,0 +1,93 @@
+﻿@using Wurqout.ViewModels;
+<div class="box p1 @(Block.Exercise.HasWeights? "has-background-link" : "has-background-info") is-light">
+    <div class="columns is-vcentered is-gapless is-marginless is-mobile">
+        <div class="column">
+            <p @onclick="()=> { showDetails = !showDetails; }" class="has-text-weight-bold" style="cursor: pointer">@Block.Exercise.Name</p>
+        </div>
+        <div class="column is-narrow">
+            <div class="dropdown is-hoverable is-right">
+                <div class="dropdown-trigger">
+                    <a class="button @(Block.Exercise.HasWeights ? "is-link" : "is-info") is-light" aria-haspopup="true" aria-controls="dropdown-menu">
+                        <span class="icon is-medium">
+                            <i class="fas fa-ellipsis-v" aria-hidden="true"></i>
+                        </span>
+                    </a>
+                </div>
+                <div class="dropdown-menu" id="dropdown-menu" role="menu">
+                    <div class="dropdown-content">
+                        <a @onclick="() => InfoClicked.InvokeAsync(Block)" class="dropdown-item">
+                            <span class="icon">
+                                <i class="fa fa-info"></i>
+                            </span>
+                            Info...
+                        </a>
+                        <a @onclick="() => EditClicked.InvokeAsync(Block)"class="dropdown-item">
+                            <span class="icon">
+                                <i class="fa fa-edit"></i>
+                            </span>
+                            Edit...
+                        </a>
+                        <hr class="dropdown-divider">
+                        <a @onclick="() => RemoveClicked.InvokeAsync(Block)" class="dropdown-item">
+                            <span class="icon">
+                                <i class="fa fa-trash"></i>
+                            </span>
+                            Remove...
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    @if (showDetails)
+    {
+        <hr class="is-thin" />
+        <div class="level is-mobile">
+            <div class="level-left">
+                <div class="level-item ml-1">
+                    @if (Block.IsTimed)
+                    {
+                        <span class="icon">
+                            <i class="fa fa-stopwatch"></i>
+                            &nbsp;@Block.Duration<span>s</span>
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="icon">
+                            <i class="fa fa-dumbbell"></i>
+                            &nbsp;@Block.NumReps
+                        </span>
+                    }
+                </div>
+            </div>
+            <div class="level-right">
+                <div class="level-item">
+                    <span class="tags">
+                        <span class="tag is-white">
+                            @Block.Exercise.FocusArea
+                        </span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    }
+    </div>
+
+@code {
+
+    // Parameters
+
+    [Parameter] public Block Block { get; set; }
+
+    [Parameter] public EventCallback<Block> InfoClicked { get; set; }
+
+    [Parameter] public EventCallback<Block> EditClicked { get; set; }
+
+    [Parameter] public EventCallback<Block> RemoveClicked { get; set; }
+
+    // Fields
+
+    private bool showDetails;
+
+}

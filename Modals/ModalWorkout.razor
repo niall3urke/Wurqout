@@ -1,0 +1,245 @@
+﻿@using Wurqout.Code.Helpers;
+@using Wurqout.Code.Workout;
+@using Wurqout.Services;
+@using Wurqout.ViewModels;
+@inject NavigationManager Nav
+@inject RoutineService Routine 
+@inject ModalService Modal
+@inject IJSRuntime Js
+
+<div class="modal-background is-solid"></div>
+<div class="modal-content is-clipped" style="max-height: none;">
+    @if (Workout != null)
+    {
+        @if (Complete)
+        {
+            <div class="v-level m1">
+                <div class="box p3 has-text-centered">
+                    <div class="field">
+                        <p class="is-size-1">Done!</p>
+                    </div>
+                    <div class="field">
+                        <span class="fa-stack fa-3x">
+                            <i class="fa fa-circle fa-stack-2x"></i>
+                            <i class="fa fa-check fa-stack-1x fa-inverse"></i>
+                        </span>
+                    </div>
+                    <div class="field">
+                        <p class="is-size-5">Challenge someone else to complete this workout</p>
+                    </div>
+                    <div class="field">
+                        @{
+                            string query = LinkBuilder.GetQueryString(Nav.BaseUri, Settings, Routine.Blocks);
+                            string link = "whatsapp://send?text=You've been challenged! " + System.Net.WebUtility.UrlEncode(query);
+                        }
+                        <a class="button is-primary is-medium" href="@link">
+                            <span class="icon">
+                                <i class="fa fa-whatsapp"></i>
+                            </span>
+                            <span>
+                                Send Challenge
+                            </span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="workout-card">
+                <div class="workout-card__scroll">
+                    <div class="workout-card__head">
+                        <figure class="workout-card__photo">
+                            <img class="workout-card__img @ImageClass" src="@Image" />
+                        </figure>
+                        <div class="is-circle has-shadow mt-n3">
+                            @if (CurrentBlock != null && !CurrentBlock.IsTimed)
+                            {
+                                <div class="row has-text-centered">
+                                    <div class="col">
+                                        <p class="is-size-5">@Time</p>
+                                        <p class="heading">Reps</p>
+                                    </div>
+                                </div>
+                            }
+                            else
+                            {
+                                <p class="is-size-4">@Time</p>
+                            }
+                        </div>
+                    </div>
+                    <div class="workout-card__body">
+                        <p class="is-size-3 is-size-1-tablet has-text-centered">@CurrentBlock?.Title</p>
+                        <div class="content">
+                            @if (CurrentBlock?.Steps != null)
+                            {
+                                <ul>
+                                    @foreach (string step in CurrentBlock?.Steps)
+                                    {
+                                        <li>@step</li>
+                                    }
+                                </ul>
+                            }
+                        </div>
+                    </div>
+                </div>
+                <div class="workout-card__foot">
+                    <div class="workout-card__body--faded"></div>
+                    <div class="level is-mobile" style="z-index: 10;">
+                        <div class="level-item">
+                            <div>
+                                <span class="icon is-large">
+                                    <i class="fas fa-lg fa-dumbbell"></i>
+                                </span>
+                                <p>@CurrentBlock?.Position/@Settings.NumberExercises</p>
+                            </div>
+                        </div>
+                        <div class="level-item">
+                            <span class="icon is-large">
+                                @if (CurrentBlock != null)
+                                {
+                                    if (CurrentBlock.IsTimed)
+                                    {
+                                        <i @onclick="OnPauseResumeClicked" class="fa @(Workout.Paused ? "fa-play-circle" : "fa-pause-circle") fa-4x"></i>
+                                    }
+                                    else
+                                    {
+                                        <i @onclick="OnPauseResumeClicked" class="fa fa-chevron-circle-right fa-4x"></i>
+                                    }
+                                }
+                            </span>
+                        </div>
+                        <div class="level-item">
+                            <div>
+                                <span class="icon is-large">
+                                    <i class="fas fa-lg fa-stopwatch"></i>
+                                </span>
+                                <p>@CurrentBlock?.Set/@Settings.NumberSets</p>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="heading is-size-6 has-text-light no-wrap" style="margin: 0 0.5rem;">Next: @CurrentBlock?.Next</p>
+                </div>
+            </div>
+        }
+    }
+</div>
+<button @onclick="Close" class="modal-close is-large has-background-grey" aria-label="close"></button>
+
+@code {
+
+    // Cascades
+
+    [CascadingParameter] ModalParameters Parameters { get; set; }
+
+    // Properties
+
+    Settings Settings;
+
+    public ModalWorkout() { }
+
+    // Properties
+
+    public WorkoutBlock CurrentBlock { get; set; }
+
+    public WorkoutTimer Workout { get; set; }
+
+    public string ImageClass { get; set; }
+
+    public bool Complete { get; set; }
+
+    public string Image { get; set; }
+
+    public int Time { get; set; }
+
+
+    // Events
+
+    protected override void OnInitialized()
+    {
+        Parameters.TryGet<Settings>("Settings", out Settings);
+
+        if (Routine.Blocks.Count > 0)
+        {
+            var blocks = new WorkoutBuilder(Routine.Blocks, Settings).Build();
+
+            Workout = new WorkoutTimer(blocks, Js);
+
+            Workout.Completed += Workout_Completed;
+            Workout.BlockChanged += Block_Changed;
+            Workout.TimeChanged += Time_Changed;
+
+            Workout.Start();
+
+            Modal.OnClose += OnClose;
+        }
+    }
+
+    // Events - handlers
+
+    void OnPauseResumeClicked()
+    {
+        if (Workout.Paused)
+        {
+            Workout.Paused = false;
+            Workout.Play();
+        }
+        else
+        {
+            Workout.Paused = true;
+        }
+    }
+
+    void Close()
+    {
+        Modal.Close(ModalResult.Cancel());
+    }
+
+    void OnClose(ModalResult result)
+    {
+        Modal.OnClose -= OnClose;
+        Workout.Cancel = true;
+    }
+
+    public void Block_Changed(WorkoutBlock block)
+    {
+        CurrentBlock = block;
+
+        if (CurrentBlock.Image != Image)
+        {
+            ImageClass = "";
+            if (!string.IsNullOrWhiteSpace(CurrentBlock.Image))
+            {
+                LoadImage(CurrentBlock.Image);
+            }
+        }
+    }
+
+    public void Time_Changed(int time)
+    {
+        Time = time;
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Workout_Completed()
+    {
+        Complete = true;
+        InvokeAsync(StateHasChanged);
+    }
+
+
+    // Methods
+
+    private async void LoadImage(string url)
+    {
+        ImageClass = "";
+
+        if (await Js.InvokeAsync<bool>("lazyLoadImage", url))
+        {
+            Image = url;
+            ImageClass = "workout-card__img--loaded";
+        }
+    }
+
+
+}

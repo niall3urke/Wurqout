@@ -1,0 +1,359 @@
+﻿@page "/"
+@using Wurqout.Code.Exercises;
+@using Wurqout.Code.Helpers;
+@using Wurqout.Components
+@using Wurqout.Modals;
+@using Wurqout.Services;
+@using Wurqout.ViewModels;
+@inject NavigationManager Nav
+@inject RoutineService Routine
+@inject ModalService Modal
+@inject IJSRuntime Js
+
+<HubComponent></HubComponent>
+
+<section id="hero" class="hero is-primary is-fullheight">
+    <div class="hero-head">
+        <NavBar />
+    </div>
+    <div class="hero-body">
+        <div class="container has-text-centered">
+            <figure class="image is-inline-block" style="max-width: 300px; width: 100%; padding: 0 2rem;">
+                <img src="/logotext-516.png" />
+            </figure>
+            <h1 class="subtitle is-size-4-desktop">Generate a workout in seconds</h1>
+            <div class="buttons is-centered">
+                <button @onclick="GenerateClicked" class="button is-medium is-white">Generate</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+@if (Routine.Blocks.Count > 0)
+{
+    <section id="exercises" class="section" style="min-height: 100vh;">
+        <div class="container">
+            <div class="columns is-centered">
+                <div class="column is-6">
+                    <BlockMenu AddClicked="ShowModalAddExercise"
+                               SortAlternateClicked="SortClicked"
+                               SortEasyToHardClicked="SortEasyToHard"
+                               SortHardToEasyClicked="SortHardToEasy"
+                               SortRandomClicked="RandomClicked"
+                               SortByFocusClicked="SortByFocus" />
+
+                    @foreach (var block in Routine.Blocks)
+                    {
+                        <BlockCard Block="block"
+                                   InfoClicked="ShowModalExerciseInfo"
+                                   EditClicked="ShowModalEditExercise"
+                                   RemoveClicked="ShowModalRemoveExercise" />
+                    }
+
+                    <SettingsSummary Settings="_settings"
+                                     ShowModal="ModalSettings" />
+
+                    <div class="field has-addons">
+                        <div class="control is-expanded">
+                            <button @onclick="ShowModalWorkout" class="button is-primary is-medium is-fullwidth">Start Workout</button>
+                        </div>
+                        <div class="control">
+                            <div class="is-hidden-mobile">
+                                <button @onclick="GenerateClicked" class="button is-primary is-medium">
+                                    <span class="icon">
+                                        <i class="fa fa-redo"></i>
+                                    </span>
+                                    <span>Regenerate</span>
+                                </button>
+                            </div>
+                            <div @onclick="GenerateClicked" class="is-hidden-tablet is-flex-mobile">
+                                <button class="button is-primary is-medium">
+                                    <span class="icon">
+                                        <i class="fa fa-redo"></i>
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
+<Modal />
+
+@code{
+
+    private ExerciseGenerator _generator;
+    private Settings _settings;
+
+    private bool _scrollToExercises;
+    private bool _isChallenge;
+
+    // Events
+
+    protected override void OnInitialized()
+    {
+        _generator = new ExerciseGenerator();
+        _settings = new Settings();
+
+        if (Nav.Uri.Contains("?"))
+        {
+            // Create a parameter object that'll be disposed of quickly
+            var _ = new LinkBuilder();
+
+            // Get the query from the url
+            int index = Nav.Uri.IndexOf("?");
+            string query = Nav.Uri.Substring(index, Nav.Uri.Length - index);
+
+            // Parse the Uri, getting the settings and exercises
+            _.ParseQueryString(query, out Settings settings, out List<Block> blocks);
+
+            // Set the routine service block list
+            Routine.Blocks = blocks;
+
+            // We have exercises -- scroll them into view
+            _scrollToExercises = true;
+
+            // Avoid fetching the settings from local storage
+            _isChallenge = true;
+
+            // Hook up the settings values
+            _settings = settings;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            if (!_isChallenge)
+            {
+                // Get the stored settings from local storage
+                var settings = await Js.InvokeAsync<Settings>("getItem", "wurqout-settings");
+
+                // If it's not null assign it to the settings object
+                _settings = settings ?? _settings;
+            }
+        }
+
+        // Has the flag for scrolling been set?
+        if (_scrollToExercises)
+        {
+            // Reset the flag
+            _scrollToExercises = false;
+
+            // Scroll the exercises into view
+            await Js.InvokeVoidAsync("scrollTo", "#exercises");
+        }
+    }
+
+    // Methods: control events
+
+    void GenerateClicked()
+    {
+        // Once the app is rerendered, we want to scroll
+        // to the exercises using js interop.
+        _scrollToExercises = true;
+
+        // We'll be generating a new routine, so remove
+        // any existing blocks before starting.
+        Routine.Blocks.Clear();
+
+        // Run the generator and populate it's filtered
+        // and exercises lists.
+        _generator.Run(_settings);
+
+        // Loop the generated exercises and create a
+        // default block for each using the settings.
+        _generator.Exercises.ForEach(x =>
+        {
+            Routine.Blocks.Add(new Block
+            {
+                Duration = _settings.DurationInterval,
+                IsTimed = true,
+                Exercise = x,
+            });
+        });
+    }
+
+    // Methods: block menu handlers
+
+    void RandomClicked() =>
+        Routine.Sort(SortStyle.Random); //.Blocks.Shuffle();
+
+    void SortClicked() =>
+        Routine.Sort(SortStyle.Alternate); //_generator.AlternateExercises();
+
+    void SortHardToEasy() =>
+        Routine.Sort(SortStyle.HardToEasy); //.Blocks = Routine.Blocks.OrderByDescending(x => x.Exercise.Difficulty).ToList();
+
+    void SortEasyToHard() =>
+        Routine.Sort(SortStyle.EasyToHard); //.Blocks = Routine.Blocks.OrderBy(x => x.Exercise.Difficulty).ToList();
+
+    void SortByFocus() =>
+        Routine.Sort(SortStyle.GroupByFocus); //.Blocks = Routine.Blocks.OrderBy(x => x.Exercise.FocusArea).ToList();
+
+    // Modal: Remove exercise
+
+    void ShowModalRemoveExercise(Block block)
+    {
+        var parameters = new ModalParameters();
+        parameters.Add("Block", block);
+
+        Modal.OnClose += ModalRemoveExercise_Closed;
+        Modal.Show<ModalExerciseRemove>(parameters);
+    }
+
+    // Methods: update settings
+
+    void UpdateSettings()
+    {
+        // TODO: Account for the fact that exercises don't
+        // have to be timed, and adjust total time
+
+        // Niave approach
+        _settings.NumberExercises = Routine.Blocks.Count;
+    }
+
+    void ModalRemoveExercise_Closed(ModalResult result)
+    {
+        Modal.OnClose -= ModalRemoveExercise_Closed;
+
+        if (result.Success)
+        {
+            var block = (Block)result.Data;
+            if (Routine.Blocks.Contains(block))
+            {
+                Routine.Blocks.Remove(block);
+
+                UpdateSettings();
+                InvokeAsync(StateHasChanged);
+            }
+        }
+    }
+
+    // Modal: Add exercise
+
+    void ShowModalAddExercise()
+    {
+        var parameters = new ModalParameters();
+        parameters.Add("Settings", _settings);
+
+        Modal.OnClose += ModalAddExercise_Closed;
+        Modal.Show<ModalExerciseAdd>(parameters);
+    }
+
+    void ModalAddExercise_Closed(ModalResult result)
+    {
+        Modal.OnClose -= ModalAddExercise_Closed;
+
+        if (result.Success)
+        {
+            var exercises = (List<Exercise>)result.Data;
+            exercises.ForEach(x =>
+            {
+                Routine.Blocks.Add(new Block
+                {
+                    Exercise = x,
+                    IsTimed = true,
+                    Duration = _settings.DurationInterval,
+                    NumReps = 0,
+                });
+            });
+
+            UpdateSettings();
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    // Modal: Edit exercise
+
+    void ShowModalEditExercise(Block block)
+    {
+        var parameters = new ModalParameters();
+        parameters.Add("Block", block);
+
+        Modal.OnClose += ModalEditExercise_Closed;
+        Modal.Show<ModalExerciseEdit>(parameters);
+    }
+
+    void ModalEditExercise_Closed(ModalResult result)
+    {
+        Modal.OnClose -= ModalEditExercise_Closed;
+
+        if (result.Success)
+        {
+            var block = (Block)result.Data;
+            for (int i = 0; i < Routine.Blocks.Count; i++)
+            {
+                if (Routine.Blocks[i] == block)
+                {
+                    Routine.Blocks[i] = block;
+                    InvokeAsync(StateHasChanged);
+                    return;
+                }
+            }
+        }
+    }
+
+    // Modal: Show settings
+
+    void ModalSettings()
+    {
+        var parameters = new ModalParameters();
+        parameters.Add("Settings", _settings);
+
+        Modal.OnClose += ModalSettings_Closed;
+        Modal.Show<ModalSettings>(parameters);
+    }
+
+    void ModalSettings_Closed(ModalResult result)
+    {
+        Modal.OnClose -= ModalSettings_Closed;
+
+        if (result.Success)
+        {
+            _settings = (Settings)result.Data;
+
+            Js.InvokeVoidAsync("setItem", "wurqout-settings", _settings);
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    // Modal: Show workout
+
+    void ShowModalWorkout()
+    {
+        // Check we actually have exercises
+        if (Routine.Blocks.Count < 1)
+            return;
+
+        var parameters = new ModalParameters();
+        parameters.Add("Settings", _settings);
+
+        Modal.OnClose += ModalWorkout_Closed;
+        Modal.Show<ModalWorkout>(parameters);
+    }
+
+    void ModalWorkout_Closed(ModalResult result)
+    {
+        Modal.OnClose -= ModalWorkout_Closed;
+
+        if (result.Success)
+        {
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    // Modal: Show info
+
+    void ShowModalExerciseInfo(Block block)
+    {
+        var parameters = new ModalParameters();
+        parameters.Add("Exercise", block.Exercise);
+        Modal.Show<ModalExerciseInfo>(parameters);
+    }
+
+}

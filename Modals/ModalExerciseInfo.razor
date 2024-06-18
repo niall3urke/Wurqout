@@ -1,0 +1,101 @@
+﻿@using Wurqout.Services;
+@using Wurqout.ViewModels;
+@inject ModalService Modal
+
+<div class="modal-background"></div>
+<div class="modal-card">
+    <header class="modal-card-head">
+        <p class="modal-card-title">Info</p>
+        <button @onclick="Close" class="delete" aria-label="close"></button>
+    </header>
+    <section class="modal-card-body">
+        <div>
+            <div class="content">
+                <p class="heading">Name</p>
+                <p>@Exercise.Name</p>
+
+                @if (Exercise.Steps != null)
+                {
+                    if (Exercise.Steps.Length > 0)
+                    {
+                        <p class="heading">Steps</p>
+                        <ul>
+                            @foreach (var step in Exercise.Steps)
+                            {
+                                <li>@step</li>
+                            }
+                        </ul>
+                    }
+                }
+
+                @if (!string.IsNullOrWhiteSpace(Exercise.ImageUrl))
+                {
+                    <p class="heading">Preview</p>
+                    <figure class="image">
+                        <img src="@Exercise.ImageUrl" />
+                    </figure>
+                }
+
+                <p class="heading">Tags</p>
+                <div class="field is-grouped is-grouped-multiline">
+                    <div class="control">
+                        <div class="tags has-addons">
+                            <span class="tag is-dark">family</span>
+                            <span class="tag">@Exercise.Family.ToString().ToLower()</span>
+                        </div>
+                    </div>
+
+                    <div class="control">
+                        <div class="tags has-addons">
+                            <span class="tag is-dark">focus</span>
+                            <span class="tag">@Exercise.FocusArea.ToString().ToLower()</span>
+                        </div>
+                    </div>
+
+                    @*<div class="control">
+                            <div class="tags has-addons">
+                                <span class="tag is-dark">group</span>
+                                <span class="tag">@Exercise.</span>
+                            </div>
+                        </div>*@
+
+                    <div class="control">
+                        <div class="tags has-addons">
+                            <span class="tag is-dark">equipment</span>
+                            <span class="tag">@Exercise.Equipment.ToString().ToLower()</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <footer class="modal-card-foot">
+        <button @onclick="Close" class="button">Close</button>
+    </footer>
+</div>
+
+@code {
+
+    // Cascades
+
+    [CascadingParameter] ModalParameters Parameters { get; set; }
+
+    // Properties
+
+    public Exercise Exercise { get; set; }
+
+    // Events
+
+    protected override void OnInitialized()
+    {
+        Exercise = new Exercise();
+
+        if (Parameters.TryGet<Exercise>("Exercise", out Exercise exercise))
+        {
+            Exercise = exercise;
+        }
+    }
+
+    private void Close() => Modal.Close(ModalResult.OK());
+
+}

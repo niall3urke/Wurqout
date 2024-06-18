@@ -1,0 +1,40 @@
+﻿@using Wurqout.Services;
+@inject HubService syncService
+
+<div>
+    <input class="input" type="text" @bind="groupName" />
+    <button class="button is-link" @onclick="ConnectToSyncHub">Connect</button>
+</div>
+
+<div>
+    <textarea class="textarea" @bind="data"></textarea>
+    <button class="button is-link" @onclick="SendSyncData">Send Data</button>
+</div>
+@if (receivedData != null)
+{
+    <div class="notification">
+        <p>@receivedData</p>
+    </div>
+}
+
+@code {
+
+    private string receivedData;
+    private string groupName;
+    private string data;
+
+    private async Task ConnectToSyncHub()
+    {
+        await syncService.StartConnectionAsync();
+        await syncService.JoinGroupAsync(groupName);
+        syncService.OnReceiveData += (data) =>
+        {
+            receivedData = data;
+        };
+    }
+
+    private async Task SendSyncData()
+    {
+        await syncService.SendDataAsync(groupName, data);
+    }
+}

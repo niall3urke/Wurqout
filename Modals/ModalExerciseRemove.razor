@@ -1,0 +1,47 @@
+﻿@using Wurqout.Services;
+@using Wurqout.ViewModels;
+@inject ModalService Modal
+
+<div class="modal-background"></div>
+<div class="modal-content">
+    <article class="message is-danger m1">
+        <div class="message-header">
+            <p>Remove Exercise?</p>
+            <button @onclick="Cancel" class="delete" aria-label="delete"></button>
+        </div>
+        <div class="message-body has-text-centered">
+            <p class="mb-2">This exercise will be removed from your routine</p>
+            <div class="buttons is-centered">
+                <button @onclick="Cancel" class="button is-danger is-inverted">Cancel</button>
+                <button @onclick="Remove" class="button is-danger">Remove</button>
+            </div>
+        </div>
+    </article>
+</div>
+
+@code {
+
+    // Cascades
+
+    [CascadingParameter] ModalParameters Parameters { get; set; }
+
+    // Properties
+
+    public Block Block { get; set; }
+
+    // Events
+
+    protected override void OnInitialized()
+    {
+        Block = new Block();
+
+        if (Parameters.TryGet<Block>("Block", out Block block))
+        {
+            Block = block;
+        }
+    }
+
+    void Remove() => Modal.Close(ModalResult.OK<Block>(Block));
+
+    void Cancel() => Modal.Close(ModalResult.Cancel());
+}

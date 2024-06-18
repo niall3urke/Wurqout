@@ -1,0 +1,256 @@
+﻿@using Wurqout.Services;
+@using Wurqout.ViewModels;
+@inject ModalService Modal
+
+<div class="modal-background"></div>
+<div class="modal-card">
+    <header class="modal-card-head">
+        <p class="modal-card-title">
+            Settings
+        </p>
+        <button @onclick="Close" class="delete" aria-label="close"></button>
+    </header>
+    <div class="modal-card-body">
+        <div class="mb-2">
+            <p class="heading">Basic Setup</p>
+            <hr />
+            <div class="field is-horizontal">
+                <div class="field-label is-normal">
+                    <label class="label">Exercises</label>
+                </div>
+                <div class="field-body">
+                    <div class="field">
+                        <div class="control">
+                            <input @bind="Settings.NumberExercises" class="input" type="number" min="1" max="50" />
+                        </div>
+                        <p class="help">The number of exercises to generate in a set</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal">
+                <div class="field-label is-normal">
+                    <label class="label">Sets</label>
+                </div>
+                <div class="field-body">
+                    <div class="field">
+                        <div class="control">
+                            <input @bind="Settings.NumberSets" class="input" type="number" min="1" max="50" />
+                        </div>
+                        <p class="help">The number of times you want to repeat the exercises</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal">
+                <div class="field-label is-normal">
+                    <label class="label">Interval</label>
+                </div>
+                <div class="field-body">
+                    <div class="field">
+                        <div class="field has-addons">
+                            <div class="control">
+                                <input @bind="Settings.DurationInterval" class="input" type="number" min="5" max="300" />
+                            </div>
+                            <div class="control">
+                                <a class="button is-static">
+                                    seconds
+                                </a>
+                            </div>
+                        </div>
+                        <p class="help">The duration of each exercise</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal">
+                <div class="field-label is-normal">
+                    <label class="label">Rest</label>
+                </div>
+                <div class="field-body">
+                    <div class="field">
+                        <div class="field has-addons">
+                            <div class="control">
+                                <input @bind="Settings.DurationRest" class="input" type="number" min="5" max="300" />
+                            </div>
+                            <div class="control">
+                                <a class="button is-static">
+                                    seconds
+                                </a>
+                            </div>
+                        </div>
+                        <p class="help">The duration of rest between exercises</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal">
+                <div class="field-label is-normal">
+                    <label class="label">Break</label>
+                </div>
+                <div class="field-body">
+                    <div class="field">
+                        <div class="field has-addons">
+                            <div class="control">
+                                <input @bind="Settings.DurationBreak" class="input" type="number" min="5" max="600" />
+                            </div>
+                            <div class="control">
+                                <a class="button is-static">
+                                    seconds
+                                </a>
+                            </div>
+                        </div>
+                        <p class="help">The duration of rest between sets</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-2">
+            <p class="heading">Equipment</p>
+            <hr />
+
+            <div class="field is-horizontal">
+                <div class="field-label"></div>
+                <div class="field-body">
+                    <div class="field">
+                        <div class="control">
+                            <label class="checkbox">
+                                <input @bind="Settings.HasKettlebell" type="checkbox">
+                                I have a kettlebell
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal">
+                <div class="field-label"></div>
+                <div class="field-body">
+                    <div class="field">
+                        <div class="control">
+                            <label class="checkbox">
+                                <input @bind="Settings.HasDumbbells" type="checkbox">
+                                I have dumbbells
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-2">
+            <p class="heading">Strength-Cardio Ratio</p>
+            <hr>
+            <div class="field is-horizontal">
+                <div class="field-label"></div>
+                <div class="field-body">
+                    <div class="field">
+                        <div class="control">
+                            <div class="columns is-vcentered is-mobile" style="max-width: 456px">
+                                <div class="column is-narrow">
+                                    <span class="icon is-medium">
+                                        <i class="fa fa-dumbbell" aria-hidden="true"></i>
+                                    </span>
+                                    <small>@Settings.PercentWeight %</small>
+                                </div>
+                                <div class="column">
+                                    <input @bind="Settings.Ratio" type="range" step="0.1" min="0" max="1" />
+                                </div>
+                                <div class="column is-narrow">
+                                    <small>@Settings.PercentBodyweight %</small>
+                                    <span class="icon is-large">
+                                        <i class="fa fa-heartbeat" aria-hidden="true"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="help">Adjust the ratio of weighted exercises to bodyweight exercises</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-2">
+            <p class="heading">Focus Areas</p>
+            <hr />
+
+            <div class="field is-horizontal">
+                <div class="field-label"></div>
+                <div class="field-body">
+                    <div class="field">
+                        <div class="control">
+                            <label class="checkbox">
+                                <input @bind="Settings.IncludeUpperbody" type="checkbox">
+                                I want to focus on upper body
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal">
+                <div class="field-label"></div>
+                <div class="field-body">
+                    <div class="field">
+                        <div class="control">
+                            <label class="checkbox">
+                                <input @bind="Settings.IncludeLowerbody" type="checkbox">
+                                I want to focus on lower body
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field is-horizontal">
+                <div class="field-label"></div>
+                <div class="field-body">
+                    <div class="field">
+                        <div class="control">
+                            <label class="checkbox">
+                                <input @bind="Settings.IncludeCore" type="checkbox">
+                                I want to focus on core
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer class="modal-card-foot">
+        <button @onclick="Close" class="button">Close</button>
+    </footer>
+</div>
+
+
+@code {
+
+    // Cascades
+
+    [CascadingParameter] ModalParameters Parameters { get; set; }
+
+    // Properties
+
+    public Settings Settings { get; set; }
+
+    // Events
+
+    protected override void OnInitialized()
+    {
+        Settings = new Settings();
+
+        if (Parameters.TryGet<Settings>("Settings", out Settings settings))
+        {
+            Settings = settings;
+        }
+    }
+
+    private void Close()
+    {
+        Modal.Close(ModalResult.OK<Settings>(Settings));
+    }
+
+
+
+}
